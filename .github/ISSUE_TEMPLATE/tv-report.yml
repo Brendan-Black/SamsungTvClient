@@ -1,0 +1,52 @@
+name: TV report
+description: Tell us what worked (or didn't) on your TV
+title: "TV report: <model>"
+labels: ["tv-report"]
+body:
+  - type: markdown
+    attributes:
+      value: Only one model has been tried so far, so this helps a lot. Please leave out IP addresses, MAC addresses and tokens.
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: From `tv info`
+      placeholder: UN75NU8000
+    validations:
+      required: true
+  - type: input
+    id: generation
+    attributes:
+      label: API generation
+      description: From `tv discover` or `tv info`
+      placeholder: Tizen with a token (2017 on)
+    validations:
+      required: true
+  - type: input
+    id: tizen
+    attributes:
+      label: Tizen version, if you know it
+      placeholder: "4.0"
+  - type: checkboxes
+    id: worked
+    attributes:
+      label: What worked
+      options:
+        - label: "`tv info`"
+        - label: "`tv pair`"
+        - label: "`tv key`"
+        - label: "`tv text`"
+        - label: "`tv pointer` / `tv click`"
+        - label: "`tv apps` / `tv launch`"
+        - label: "`tv browse`"
+        - label: "`tv close`"
+        - label: "`tv dial`"
+        - label: "`tv cast`, `tv seek`, `tv volume`"
+        - label: "`tv cast --subtitles`"
+        - label: "`tv wake`"
+        - label: "`tv certificate` / `tv install`"
+  - type: textarea
+    id: notes
+    attributes:
+      label: What didn't work, and anything odd
+      description: The exact error message is the most useful thing here.

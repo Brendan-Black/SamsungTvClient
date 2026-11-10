@@ -1,0 +1,6 @@
+# JitPack builds each tag into com.github.Brendan-Black:SamsungTvClient:<tag>.
+# Gradle runs on JDK 21 here and fetches the JDK 25 toolchain (settings.gradle.kts).
+jdk:
+  - openjdk21
+install:
+  - ./gradlew publishToMavenLocal -x runTests

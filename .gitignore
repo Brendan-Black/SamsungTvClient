@@ -1,0 +1,15 @@
+# Build output
+build/
+.gradle/
+out/
+*.class
+
+# Signed app packages
+*.wgt
+
+# Editors / OS
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
