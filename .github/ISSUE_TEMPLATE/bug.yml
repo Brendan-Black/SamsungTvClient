@@ -1,0 +1,31 @@
+name: Bug
+description: Something does the wrong thing
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Please leave out IP addresses, MAC addresses and tokens. For a security problem, use [private reporting](https://github.com/Brendan-Black/SamsungTvClient/security/advisories/new) instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The command you ran and the exact error message.
+      render: console
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: tv
+    attributes:
+      label: TV model and generation
+      placeholder: UN75NU8000, Tizen with a token
+  - type: input
+    id: version
+    attributes:
+      label: SamsungTvClient version, JDK and OS
+      placeholder: 1.0.0, JDK 25, Windows 11
