@@ -27,10 +27,17 @@ public record TvInfo(String id, String name, String modelName, @Nullable String 
 	Map<String, String> features) {
 
 	public static final String UNKNOWN = "unknown";
+	/** The API's device object, and the fields of it these are read from. */
+	private static final String DEVICE = "device";
+	private static final String ID = "id";
+	private static final String NAME = "name";
+	private static final String MODEL_NAME = "modelName";
+	/** How the API spells a true flag: as a string. */
+	private static final String TRUE = "true";
 
 	/** @throws IllegalArgumentException if {@code json} isn't the API's device object */
 	public static TvInfo parse(String json) {
-		if (!(Json.parse(json) instanceof Map<?, ?> root) || !(root.get("device") instanceof Map<?, ?> d)) {
+		if (!(Json.parse(json) instanceof Map<?, ?> root) || !(root.get(DEVICE) instanceof Map<?, ?> d)) {
 			throw new IllegalArgumentException("not a Samsung TV's /api/v2/ reply");
 		}
 		Map<String, String> features = new LinkedHashMap<>();
@@ -42,14 +49,14 @@ public record TvInfo(String id, String name, String modelName, @Nullable String 
 				// a TV with a malformed flag list still has a usable device object
 			}
 		}
-		return new TvInfo(text(d, "id"), text(d, "name"), text(d, "modelName"), Json.string(d, "model").orElse(null), text(d, "OS"), text(d, "ip"),
+		return new TvInfo(text(d, ID), text(d, NAME), text(d, MODEL_NAME), Json.string(d, "model").orElse(null), text(d, "OS"), text(d, "ip"),
 			Json.string(d, "wifiMac").orElse(null), text(d, "networkType"), text(d, "resolution"), Json.string(d, "PowerState").orElse(null),
-			"true".equals(text(d, "TokenAuthSupport")), "1".equals(text(d, "developerMode")), Map.copyOf(features));
+			TRUE.equals(text(d, "TokenAuthSupport")), "1".equals(text(d, "developerMode")), Map.copyOf(features));
 	}
 
 	/** Whether the TV says it supports {@code feature} (an {@code isSupport} flag). */
 	public boolean supports(String feature) {
-		return "true".equals(features.get(feature));
+		return TRUE.equals(features.get(feature));
 	}
 
 	public Optional<String> knownModel() {

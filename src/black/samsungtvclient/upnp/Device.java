@@ -3,6 +3,7 @@ package black.samsungtvclient.upnp;
 import black.samsungtvclient.model.RendererInfo;
 import black.samsungtvclient.net.Host;
 import black.samsungtvclient.net.Http;
+import black.samsungtvclient.util.Nullable;
 import black.samsungtvclient.util.Xml;
 import java.io.IOException;
 import java.net.URI;
@@ -23,11 +24,11 @@ final class Device {
 	private final Optional<String> udn;
 	private final List<Service> services;
 
-	private Device(URI descriptionUrl, Optional<String> friendlyName, String modelName, Optional<String> udn, List<Service> services) {
+	private Device(URI descriptionUrl, @Nullable String friendlyName, String modelName, @Nullable String udn, List<Service> services) {
 		this.descriptionUrl = descriptionUrl;
-		this.friendlyName = friendlyName;
+		this.friendlyName = Optional.ofNullable(friendlyName);
 		this.modelName = modelName;
-		this.udn = udn;
+		this.udn = Optional.ofNullable(udn);
 		this.services = List.copyOf(services);
 	}
 
@@ -61,8 +62,8 @@ final class Device {
 		} catch (IllegalArgumentException e) {
 			throw new IOException("bad URL in device description at " + descriptionUrl + ": " + e.getMessage(), e);
 		}
-		return new Device(descriptionUrl, Xml.text(device, "friendlyName").filter(n -> !n.isEmpty()),
-			Xml.text(device, "modelName").orElse("unknown"), Xml.text(device, "UDN"), services);
+		return new Device(descriptionUrl, Xml.text(device, "friendlyName").filter(n -> !n.isEmpty()).orElse(null),
+			Xml.text(device, "modelName").orElse("unknown"), Xml.text(device, "UDN").orElse(null), services);
 	}
 
 	/** The service of the given kind (e.g. {@code "AVTransport"}), whatever version the device offers. */

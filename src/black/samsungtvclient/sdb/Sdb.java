@@ -38,9 +38,11 @@ public final class Sdb implements AutoCloseable {
 	private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
 	private static final Duration READ_TIMEOUT = Duration.ofSeconds(15);
 
+	/** The reply that accepts a request. */
+	private static final String OKAY_REPLY = "OKAY";
 	private static final int CNXN = command("CNXN");
 	private static final int OPEN = command("OPEN");
-	private static final int OKAY = command("OKAY");
+	private static final int OKAY = command(OKAY_REPLY);
 	private static final int WRTE = command("WRTE");
 	private static final int CLSE = command("CLSE");
 
@@ -125,7 +127,7 @@ public final class Sdb implements AutoCloseable {
 		}
 		write(stream, syncRequest("DONE", (int) (System.currentTimeMillis() / 1000), new byte[0]));
 		byte[] answer = readBytesUntil(stream, b -> b.length >= 8, Duration.ofSeconds(60));
-		if (answer.length < 4 || !new String(answer, 0, 4, UTF_8).equals("OKAY")) {
+		if (answer.length < 4 || !new String(answer, 0, 4, UTF_8).equals(OKAY_REPLY)) {
 			String why = answer.length > 8 ? new String(answer, 8, answer.length - 8, UTF_8) : "no answer";
 			throw new IOException("the TV didn't take " + path + ": " + why);
 		}

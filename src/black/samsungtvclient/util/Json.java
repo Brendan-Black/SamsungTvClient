@@ -14,6 +14,11 @@ import java.util.function.Supplier;
  * {@code Boolean}/null.
  */
 public final class Json {
+	/** JSON's literals, as written and as read. */
+	private static final String TRUE = "true";
+	private static final String FALSE = "false";
+	private static final String NULL = "null";
+
 	private Json() {}
 
 	public static String write(@Nullable Object value) {
@@ -44,10 +49,10 @@ public final class Json {
 
 	private static void write(StringBuilder sb, @Nullable Object value) {
 		switch (value) {
-			case null -> sb.append("null");
+			case null -> sb.append(NULL);
 			case String s -> quote(sb, s);
 			case Boolean b -> sb.append(b);
-			case Double d when d.isNaN() || d.isInfinite() -> sb.append("null");
+			case Double d when d.isNaN() || d.isInfinite() -> sb.append(NULL);
 			case Number n -> sb.append(n);
 			case Enum<?> e -> quote(sb, e.name());
 			case Map<?, ?> m -> {
@@ -116,9 +121,9 @@ public final class Json {
 				case '{' -> nested(this::object);
 				case '[' -> nested(this::array);
 				case '"' -> string();
-				case 't' -> literal("true", Boolean.TRUE);
-				case 'f' -> literal("false", Boolean.FALSE);
-				case 'n' -> literal("null", null);
+				case 't' -> literal(TRUE, Boolean.TRUE);
+				case 'f' -> literal(FALSE, Boolean.FALSE);
+				case 'n' -> literal(NULL, null);
 				default -> number();
 			};
 		}

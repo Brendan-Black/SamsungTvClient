@@ -59,6 +59,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import black.samsungtvclient.util.Xml;
 import org.xml.sax.SAXException;
 
 /**
@@ -72,6 +73,13 @@ public final class WidgetSigner {
 	static final String DISTRIBUTOR_SIGNATURE = "signature1.xml";
 	private static final String DSIG_PROPERTIES = "http://www.w3.org/2009/xmldsig-properties";
 	private static final String WIDGETS_DIGSIG = "http://www.w3.org/ns/widgets-digsig#";
+	/** The signed properties' reference, the XML-DSig mechanism, and each signature's role. */
+	private static final String PROPERTIES_URI = "#prop";
+	private static final String DOM = "DOM";
+	private static final String AUTHOR_ROLE = "role-author";
+	private static final String DISTRIBUTOR_ROLE = "role-distributor";
+	/** The web app's manifest, at the top of its .wgt. */
+	static final String CONFIG_XML = "config.xml";
 
 	static {
 		// The JDK wraps base64 with the platform's line ending; on Windows that's a CR, written out as &#13;, inside
@@ -102,11 +110,11 @@ public final class WidgetSigner {
 
 	/** {@code files} (zip path to contents), signed and zipped. */
 	static byte[] sign(Map<String, byte[]> files, Signer author, Signer distributor) throws IOException, GeneralSecurityException {
-		if (!files.containsKey("config.xml")) { throw new IOException("not a Tizen web app: no config.xml at its top level"); }
+		if (!files.containsKey(CONFIG_XML)) { throw new IOException("not a Tizen web app: no config.xml at its top level"); }
 		TreeMap<String, byte[]> signed = new TreeMap<>(files);
 		signed.keySet().removeIf(WidgetSigner::isSignature);
-		signed.put(AUTHOR_SIGNATURE, signature(signed, author, "AuthorSignature", "role-author"));
-		byte[] distributorSignature = signature(signed, distributor, "DistributorSignature", "role-distributor");
+		signed.put(AUTHOR_SIGNATURE, signature(signed, author, "AuthorSignature", AUTHOR_ROLE));
+		byte[] distributorSignature = signature(signed, distributor, "DistributorSignature", DISTRIBUTOR_ROLE);
 		signed.put(DISTRIBUTOR_SIGNATURE, distributorSignature);
 
 		ByteArrayOutputStream wgt = new ByteArrayOutputStream();
@@ -139,20 +147,20 @@ public final class WidgetSigner {
 	 */
 	public static void verify(byte[] wgt) throws IOException, GeneralSecurityException {
 		Map<String, byte[]> files = unzip(wgt);
-		verifyOne(files, AUTHOR_SIGNATURE, "role-author");
-		verifyOne(files, DISTRIBUTOR_SIGNATURE, "role-distributor");
+		verifyOne(files, AUTHOR_SIGNATURE, AUTHOR_ROLE);
+		verifyOne(files, DISTRIBUTOR_SIGNATURE, DISTRIBUTOR_ROLE);
 	}
 
 	// ---- signing -------------------------------------------------------------------------------------
 
 	private static byte[] signature(Map<String, byte[]> files, Signer signer, String id, String role)
 		throws IOException, GeneralSecurityException {
-		XMLSignatureFactory f = XMLSignatureFactory.getInstance("DOM");
+		XMLSignatureFactory f = XMLSignatureFactory.getInstance(DOM);
 		DigestMethod sha512 = f.newDigestMethod(DigestMethod.SHA512, null);
 		List<Reference> refs = new ArrayList<>();
 		for (String name : files.keySet()) { refs.add(f.newReference(encode(name), sha512)); }
 		Transform c14n11 = f.newTransform(CanonicalizationMethod.INCLUSIVE_11, (TransformParameterSpec) null);
-		refs.add(f.newReference("#prop", sha512, List.of(c14n11), null, null));
+		refs.add(f.newReference(PROPERTIES_URI, sha512, List.of(c14n11), null, null));
 		SignedInfo info = f.newSignedInfo(
 			f.newCanonicalizationMethod(CanonicalizationMethod.EXCLUSIVE, (C14NMethodParameterSpec) null),
 			f.newSignatureMethod(SignatureMethod.RSA_SHA512, null), refs);
@@ -213,7 +221,7 @@ public final class WidgetSigner {
 			if (o.hasAttribute("Id")) { o.setIdAttribute("Id", true); }
 		}
 		X509Certificate leaf = leafCertificate(doc);
-		XMLSignatureFactory f = XMLSignatureFactory.getInstance("DOM");
+		XMLSignatureFactory f = XMLSignatureFactory.getInstance(DOM);
 		DOMValidateContext ctx = new DOMValidateContext(leaf.getPublicKey(), sig);
 		ctx.setProperty("org.jcp.xml.dsig.secureValidation", Boolean.FALSE); // apps have more than its 30 references
 		ctx.setURIDereferencer(new FileDereferencer(files, f.getURIDereferencer()));
@@ -233,7 +241,7 @@ public final class WidgetSigner {
 			boolean exempt = file.equals(name) || file.equals(DISTRIBUTOR_SIGNATURE) || (name.equals(AUTHOR_SIGNATURE) && isSignature(file));
 			if (!exempt && !covered.contains(encode(file))) { throw new GeneralSecurityException(name + " doesn't cover " + file); }
 		}
-		if (!covered.contains("#prop")) { throw new GeneralSecurityException(name + " doesn't sign its properties"); }
+		if (!covered.contains(PROPERTIES_URI)) { throw new GeneralSecurityException(name + " doesn't sign its properties"); }
 		if (!new String(xml, UTF_8).contains(WIDGETS_DIGSIG + role)) { throw new GeneralSecurityException(name + " doesn't name its role"); }
 	}
 
@@ -294,7 +302,7 @@ public final class WidgetSigner {
 		try (InputStream in = new ByteArrayInputStream(xml)) {
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			dbf.setNamespaceAware(true);
-			dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+			dbf.setFeature(Xml.DISALLOW_DOCTYPE, true);
 			return dbf.newDocumentBuilder().parse(in);
 		} catch (ParserConfigurationException | SAXException e) {
 			throw new IOException("not a signature: " + e.getMessage(), e);

@@ -4,6 +4,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import black.samsungtvclient.api.Duid;
 import black.samsungtvclient.net.Http;
+import black.samsungtvclient.util.Xml;
 import black.samsungtvclient.util.Json;
 import black.samsungtvclient.util.Nullable;
 import com.sun.net.httpserver.HttpExchange;
@@ -177,7 +178,7 @@ public final class SamsungCertificates {
 			if (fromSamsung) { account.completeExceptionally(e); }
 		}
 		byte[] body = ("<!doctype html><meta charset=utf-8><body style='font:20px sans-serif;padding:60px'>" + page).getBytes(UTF_8);
-		exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
+		exchange.getResponseHeaders().set(Http.CONTENT_TYPE, "text/html; charset=utf-8");
 		exchange.sendResponseHeaders(200, body.length);
 		try (var out = exchange.getResponseBody()) {
 			out.write(body);
@@ -292,7 +293,7 @@ public final class SamsungCertificates {
 	/** Posts the form; the reply must be 200 and hold a certificate. */
 	private static String post(URI uri, Map<String, String> fields, String csr, String csrName) throws IOException {
 		HttpRequest request = HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(60))
-			.header("Content-Type", "multipart/form-data; boundary=\"*****\"")
+			.header(Http.CONTENT_TYPE, "multipart/form-data; boundary=\"*****\"")
 			.POST(HttpRequest.BodyPublishers.ofByteArray(multipart(fields, csr, csrName))).build();
 		HttpResponse<String> response = send(request, HttpResponse.BodyHandlers.ofString());
 		String body = response.body();
@@ -387,7 +388,7 @@ public final class SamsungCertificates {
 	}
 
 	private static String escape(String s) {
-		return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+		return Xml.escape(s);
 	}
 
 	private static void openBrowser(URI uri) {

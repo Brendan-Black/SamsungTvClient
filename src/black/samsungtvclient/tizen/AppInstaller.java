@@ -41,7 +41,7 @@ public final class AppInstaller {
 	private AppInstaller() {}
 
 	public static AppIds ids(byte[] wgt) throws IOException {
-		byte[] config = WidgetSigner.unzip(wgt).get("config.xml");
+		byte[] config = WidgetSigner.unzip(wgt).get(WidgetSigner.CONFIG_XML);
 		if (config == null) { throw new IOException("not a Tizen web app: no config.xml"); }
 		return ids(new String(config, UTF_8));
 	}

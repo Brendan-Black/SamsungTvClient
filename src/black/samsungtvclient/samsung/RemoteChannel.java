@@ -72,6 +72,16 @@ public final class RemoteChannel implements RemoteControl, TextInput, Pointer, A
 	// The protocol's own field names, in every control message.
 	private static final String CMD = "Cmd";
 	private static final String TYPE_OF_REMOTE = "TypeOfRemote";
+	private static final String DATA_OF_CMD = "DataOfCmd";
+	/** The remote type of the pointer's commands. */
+	private static final String MOUSE = "ProcessMouseDevice";
+	/** The channel's message fields: what to do, with what, and for an event its name and data. */
+	private static final String METHOD = "method";
+	private static final String PARAMS = "params";
+	private static final String EVENT = "event";
+	private static final String DATA = "data";
+	/** An app's id, in the app list and in a launch. */
+	private static final String APP_ID = "appId";
 
 	/** Something the TV sent: {@code name} is the event (e.g. {@code ms.remote.imeStart}), {@code data} its payload, if any. */
 	public record Event(String name, @Nullable Object data, String json) {}
@@ -179,7 +189,7 @@ public final class RemoteChannel implements RemoteControl, TextInput, Pointer, A
 	}
 
 	private void keyCommand(String command, KeyCode code) throws IOException {
-		control(Map.of(CMD, command, "DataOfCmd", code.value(), "Option", "false", TYPE_OF_REMOTE, "SendRemoteKey"));
+		control(Map.of(CMD, command, DATA_OF_CMD, code.value(), "Option", "false", TYPE_OF_REMOTE, "SendRemoteKey"));
 	}
 
 	// ---- text and pointer ----------------------------------------------------------------------------
@@ -190,7 +200,7 @@ public final class RemoteChannel implements RemoteControl, TextInput, Pointer, A
 	 */
 	@Override
 	public void text(String text) throws IOException {
-		control(Map.of(CMD, Base64.getEncoder().encodeToString(text.getBytes(UTF_8)), "DataOfCmd", "base64",
+		control(Map.of(CMD, Base64.getEncoder().encodeToString(text.getBytes(UTF_8)), DATA_OF_CMD, "base64",
 			TYPE_OF_REMOTE, "SendInputString"));
 		control(Map.of(TYPE_OF_REMOTE, "SendInputEnd"));
 	}
@@ -202,13 +212,13 @@ public final class RemoteChannel implements RemoteControl, TextInput, Pointer, A
 		position.put("x", dx);
 		position.put("y", dy);
 		position.put("Time", String.valueOf(System.currentTimeMillis()));
-		control(Map.of(CMD, "Move", "Position", position, TYPE_OF_REMOTE, "ProcessMouseDevice"));
+		control(Map.of(CMD, "Move", "Position", position, TYPE_OF_REMOTE, MOUSE));
 	}
 
 	/** Clicks where the pointer is. */
 	@Override
 	public void click() throws IOException {
-		control(Map.of(CMD, "LeftClick", TYPE_OF_REMOTE, "ProcessMouseDevice"));
+		control(Map.of(CMD, "LeftClick", TYPE_OF_REMOTE, MOUSE));
 	}
 
 	// ---- apps ----------------------------------------------------------------------------------------
@@ -217,12 +227,12 @@ public final class RemoteChannel implements RemoteControl, TextInput, Pointer, A
 	public List<App> apps() throws IOException {
 		Event reply = request("ed.installedApp.get", null);
 		List<App> apps = new ArrayList<>();
-		if (reply.data() instanceof Map<?, ?> d && d.get("data") instanceof List<?> list) {
+		if (reply.data() instanceof Map<?, ?> d && d.get(DATA) instanceof List<?> list) {
 			for (Object o : list) {
-				if (o instanceof Map<?, ?> a && Json.string(a, "appId").filter(RemoteChannel::usable).isPresent()) {
-					AppId id = new AppId(String.valueOf(a.get("appId")));
+				if (o instanceof Map<?, ?> a && Json.string(a, APP_ID).filter(RemoteChannel::usable).isPresent()) {
+					AppId id = new AppId(String.valueOf(a.get(APP_ID)));
 					int type = a.get("app_type") instanceof Number n ? n.intValue() : 0;
-					apps.add(new App(id, Json.string(a, "name").orElse(id.value()), type));
+					apps.add(new App(id, Json.string(a, SmartApi.APP_NAME).orElse(id.value()), type));
 				}
 			}
 		}
@@ -259,7 +269,7 @@ public final class RemoteChannel implements RemoteControl, TextInput, Pointer, A
 
 	private void launch(AppId appId, LaunchType type, Map<String, String> extra) throws IOException {
 		Map<String, Object> data = new LinkedHashMap<>();
-		data.put("appId", appId.value());
+		data.put(APP_ID, appId.value());
 		data.put("action_type", type.name());
 		data.putAll(extra);
 		Event reply = request("ed.apps.launch", data);
@@ -289,7 +299,7 @@ public final class RemoteChannel implements RemoteControl, TextInput, Pointer, A
 	// ---- plumbing ------------------------------------------------------------------------------------
 
 	private void control(Map<String, Object> params) throws IOException {
-		send(Map.of("method", "ms.remote.control", "params", params));
+		send(Map.of(METHOD, "ms.remote.control", PARAMS, params));
 	}
 
 	/** Emits {@code event} to the TV and waits for its reply, which carries the same event name. */
@@ -298,10 +308,10 @@ public final class RemoteChannel implements RemoteControl, TextInput, Pointer, A
 		if (waiting.putIfAbsent(event, reply) != null) { throw new IllegalStateException("already waiting for " + event); }
 		try {
 			Map<String, Object> params = new LinkedHashMap<>();
-			params.put("event", event);
+			params.put(EVENT, event);
 			params.put("to", "host");
-			if (data != null) { params.put("data", data); }
-			send(Map.of("method", "ms.channel.emit", "params", params));
+			if (data != null) { params.put(DATA, data); }
+			send(Map.of(METHOD, "ms.channel.emit", PARAMS, params));
 			return reply.get(REPLY_WAIT.toSeconds(), TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
 			throw new IOException("no reply from the TV to " + event, e);
@@ -361,8 +371,8 @@ public final class RemoteChannel implements RemoteControl, TextInput, Pointer, A
 		private void handle(String json) {
 			Event e;
 			try {
-				if (!(Json.parse(json) instanceof Map<?, ?> m) || !(m.get("event") instanceof String name)) { return; }
-				e = new Event(name, m.get("data"), json);
+				if (!(Json.parse(json) instanceof Map<?, ?> m) || !(m.get(EVENT) instanceof String name)) { return; }
+				e = new Event(name, m.get(DATA), json);
 			} catch (IllegalArgumentException bad) {
 				return; // not JSON; nothing to route
 			}

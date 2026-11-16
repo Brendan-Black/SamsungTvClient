@@ -64,6 +64,11 @@ public final class Main {
 	private static final long CAST_WAIT_MS = 15_000;
 	private static final long KEY_GAP_MS = 150;
 
+	/** The command that prints the usage, and the flags that ask for it. */
+	private static final String HELP = "help";
+	private static final String HELP_FLAG = "--help";
+	private static final String HELP_SHORT = "-h";
+
 	private static final String USAGE = """
 		Usage: tv [options] <command> [args]
 
@@ -148,8 +153,8 @@ public final class Main {
 						generation = Generation.named(g).orElseThrow(() -> new IllegalArgumentException(
 							"--generation: no generation " + g + " (see `tv generations`)"));
 					}
-					case "-h", "--help" -> {
-						return new Options(null, name, null, upnpPort, generation, List.of("help"));
+					case HELP_SHORT, HELP_FLAG -> {
+						return new Options(null, name, null, upnpPort, generation, List.of(HELP));
 					}
 					default -> throw new IllegalArgumentException("unknown option: " + flag);
 				}
@@ -203,7 +208,7 @@ public final class Main {
 
 	static int run(Options o) throws IOException, InterruptedException {
 		List<String> args = o.args();
-		if (args.isEmpty() || List.of("help", "--help", "-h").contains(args.get(0))) {
+		if (args.isEmpty() || List.of(HELP, HELP_FLAG, HELP_SHORT).contains(args.get(0))) {
 			System.out.print(USAGE);
 			return 0;
 		}
@@ -441,7 +446,7 @@ public final class Main {
 		i.knownPowerState().ifPresent(p -> System.out.println("Power:       " + p));
 		System.out.println("Remote:      " + (i.tokenAuth() ? "paired, port " + RemoteChannel.PORT : "open, port " + SmartApi.PORT));
 		System.out.println("Developer:   " + (i.developerMode() ? "on" : "off"));
-		List<String> on = i.features().entrySet().stream().filter(e -> "true".equals(e.getValue())).map(Map.Entry::getKey).sorted().toList();
+		List<String> on = i.features().keySet().stream().filter(i::supports).sorted().toList();
 		if (!on.isEmpty()) { System.out.println("Supports:    " + String.join(", ", on)); }
 	}
 

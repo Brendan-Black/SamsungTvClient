@@ -20,9 +20,13 @@ public final class Didl {
 	/** The MIME type Samsung expects on a subtitle {@code res}, whatever the format. */
 	static final String SUBTITLE_MIME = "smi/caption";
 
+	/** The MIME type an unrecognised video is sent as, and the subtitle type an unrecognised subtitle is. */
+	private static final String MP4 = "video/mp4";
+	private static final String SRT = "srt";
+
 	private static final Map<String, String> MIME_BY_EXTENSION = Map.ofEntries(
-		Map.entry("mp4", "video/mp4"),
-		Map.entry("m4v", "video/mp4"),
+		Map.entry("mp4", MP4),
+		Map.entry("m4v", MP4),
 		Map.entry("mov", "video/quicktime"),
 		Map.entry("mkv", "video/x-matroska"),
 		Map.entry("webm", "video/webm"),
@@ -43,7 +47,7 @@ public final class Didl {
 
 	/** Subtitle formats Samsung TVs read, by file extension; the value is the {@code sec:type}. */
 	private static final Map<String, String> SUBTITLE_TYPES = Map.of(
-		"srt", "srt",
+		SRT, SRT,
 		"smi", "smi",
 		"sami", "smi",
 		"sub", "sub",
@@ -93,7 +97,7 @@ public final class Didl {
 
 	/** The {@code sec:type} for the subtitle file at {@code url}, from its extension; {@code srt} when unknown. */
 	static String subtitleType(String url) {
-		return SUBTITLE_TYPES.getOrDefault(extension(url), "srt");
+		return SUBTITLE_TYPES.getOrDefault(extension(url), SRT);
 	}
 
 	private static String extension(String url) {
@@ -114,7 +118,7 @@ public final class Didl {
 
 	/** MIME type from the URL's file extension; {@code video/mp4} when there isn't a recognisable one. */
 	public static String guessMime(String url) {
-		return mimeFromExtension(url).orElse("video/mp4");
+		return mimeFromExtension(url).orElse(MP4);
 	}
 
 	/** MIME type from the URL's file extension, if it's one this class knows. */

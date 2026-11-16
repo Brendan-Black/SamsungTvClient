@@ -18,6 +18,8 @@ import java.util.Optional;
  */
 public final class SmartApi {
 	public static final int PORT = 8001;
+	/** An app's name, as both of the TV's APIs spell it. */
+	static final String APP_NAME = "name";
 
 	private final URI base;
 
@@ -49,7 +51,7 @@ public final class SmartApi {
 		if (r.statusCode() == 404) { return Optional.empty(); }
 		check(r, "status of " + appId);
 		if (!(parse(r.body()) instanceof Map<?, ?> m)) { throw new IOException("unexpected reply for app " + appId + ": " + r.body()); }
-		return Optional.of(new AppStatus(appId, Json.string(m, "name").orElse(appId.value()), Boolean.TRUE.equals(m.get("running")),
+		return Optional.of(new AppStatus(appId, Json.string(m, APP_NAME).orElse(appId.value()), Boolean.TRUE.equals(m.get("running")),
 			Boolean.TRUE.equals(m.get("visible")), Json.string(m, "version").orElse(null)));
 	}
 

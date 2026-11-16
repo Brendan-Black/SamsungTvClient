@@ -15,6 +15,8 @@ import java.time.Duration;
 
 /** The shared HTTP client, plus a GET helper for device descriptions. */
 public final class Http {
+	/** The header naming a body's media type. */
+	public static final String CONTENT_TYPE = "Content-Type";
 	public static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
 	public static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(8);
 
@@ -50,7 +52,7 @@ public final class Http {
 	public static Response request(Method method, URI uri, String body, String contentType) throws IOException {
 		return send(HttpRequest.newBuilder(uri)
 			.timeout(REQUEST_TIMEOUT)
-			.header("Content-Type", contentType)
+			.header(CONTENT_TYPE, contentType)
 			.method(method.name(), HttpRequest.BodyPublishers.ofString(body))
 			.build());
 	}

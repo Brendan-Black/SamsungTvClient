@@ -29,7 +29,7 @@ public final class SoapClient {
 		Map<String, String> args) throws IOException {
 		HttpRequest request = HttpRequest.newBuilder(controlUrl)
 			.timeout(Http.REQUEST_TIMEOUT)
-			.header("Content-Type", "text/xml; charset=\"utf-8\"")
+			.header(Http.CONTENT_TYPE, "text/xml; charset=\"utf-8\"")
 			.header("SOAPAction", "\"" + serviceType + "#" + action + "\"")
 			.POST(HttpRequest.BodyPublishers.ofString(envelope(serviceType, action, args), UTF_8))
 			.build();

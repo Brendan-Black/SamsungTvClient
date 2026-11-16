@@ -8,6 +8,8 @@ import java.util.Map;
 /** The RenderingControl service: volume and mute on the Master channel of instance 0. */
 final class RenderingControl {
 	static final String NAME = "RenderingControl";
+	/** How a UPnP boolean can be spelled, besides 1. */
+	private static final String TRUE = "true";
 
 	private final Device.Service service;
 
@@ -32,7 +34,7 @@ final class RenderingControl {
 
 	boolean getMute() throws IOException {
 		String v = call("GetMute").getOrDefault("CurrentMute", "").trim();
-		return v.equals("1") || v.equalsIgnoreCase("true");
+		return v.equals("1") || v.equalsIgnoreCase(TRUE);
 	}
 
 	void setMute(boolean on) throws IOException {
@@ -41,7 +43,7 @@ final class RenderingControl {
 
 	private Map<String, String> call(String action, String... nameValues) throws IOException {
 		Map<String, String> args = new LinkedHashMap<>();
-		args.put("InstanceID", "0");
+		args.put(AvTransport.INSTANCE_ID, "0");
 		args.put("Channel", "Master");
 		for (int i = 0; i < nameValues.length; i += 2) { args.put(nameValues[i], nameValues[i + 1]); }
 		return SoapClient.invoke(service.controlUrl(), service.serviceType(), action, args);

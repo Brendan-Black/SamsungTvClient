@@ -19,6 +19,9 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /** Small DOM helpers. Lookups are by local name so callers needn't care about namespace prefixes. */
 public final class Xml {
+	/** The parser feature that refuses a DOCTYPE, and with it external entities: the defence against XXE. */
+	public static final String DISALLOW_DOCTYPE = "http://apache.org/xml/features/disallow-doctype-decl";
+
 	private Xml() {}
 
 	/**
@@ -30,7 +33,7 @@ public final class Xml {
 		try {
 			DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
 			f.setNamespaceAware(true);
-			f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+			f.setFeature(DISALLOW_DOCTYPE, true);
 			f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
 			f.setXIncludeAware(false);
 			f.setExpandEntityReferences(false);

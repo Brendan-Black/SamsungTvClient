@@ -10,6 +10,8 @@ import java.util.Map;
 /** The AVTransport service: load a URI and control playback. Always drives instance 0. */
 final class AvTransport {
 	static final String NAME = "AVTransport";
+	/** The first argument of every AV service action: which instance, always 0 for a TV. */
+	static final String INSTANCE_ID = "InstanceID";
 
 	private final Device.Service service;
 
@@ -50,7 +52,7 @@ final class AvTransport {
 
 	private Map<String, String> call(String action, String... nameValues) throws IOException {
 		Map<String, String> args = new LinkedHashMap<>();
-		args.put("InstanceID", "0");
+		args.put(INSTANCE_ID, "0");
 		for (int i = 0; i < nameValues.length; i += 2) { args.put(nameValues[i], nameValues[i + 1]); }
 		return SoapClient.invoke(service.controlUrl(), service.serviceType(), action, args);
 	}
