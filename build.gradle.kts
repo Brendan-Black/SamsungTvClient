@@ -5,7 +5,7 @@ plugins {
     application
     `maven-publish`
     // Formatting and compiler warnings, checked by `check`: https://github.com/Brendan-Black/black-java
-    id("black.java-standards") version "1.3.2"
+    id("black.java-standards") version "1.3.4"
     // NullAway: whatever isn't @Nullable is never null, checked at compile time.
     id("net.ltgt.errorprone") version "5.2.0"
 }
@@ -27,7 +27,7 @@ java {
 
 // lib has black.TypedString, which the public types implement. Error Prone and NullAway are build-time only.
 dependencies {
-    api("com.github.Brendan-Black.black-java:lib:1.3.2")
+    api("com.github.Brendan-Black.black-java:lib:1.3.4")
     errorprone("com.google.errorprone:error_prone_core:2.52.0")
     errorprone("com.uber.nullaway:nullaway:0.14.3")
 }

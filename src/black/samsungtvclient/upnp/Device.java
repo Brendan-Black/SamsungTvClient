@@ -1,5 +1,6 @@
 package black.samsungtvclient.upnp;
 
+import black.samsungtvclient.api.TvInfo;
 import black.samsungtvclient.model.RendererInfo;
 import black.samsungtvclient.net.Host;
 import black.samsungtvclient.net.Http;
@@ -63,7 +64,7 @@ final class Device {
 			throw new IOException("bad URL in device description at " + descriptionUrl + ": " + e.getMessage(), e);
 		}
 		return new Device(descriptionUrl, Xml.text(device, "friendlyName").filter(n -> !n.isEmpty()).orElse(null),
-			Xml.text(device, "modelName").orElse("unknown"), Xml.text(device, "UDN").orElse(null), services);
+			Xml.text(device, "modelName").orElse(TvInfo.UNKNOWN), Xml.text(device, "UDN").orElse(null), services);
 	}
 
 	/** The service of the given kind (e.g. {@code "AVTransport"}), whatever version the device offers. */
